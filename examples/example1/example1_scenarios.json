@@ -1,0 +1,18 @@
+{
+    "example1": {
+        "Cost-Optimal":[
+            [
+                "scenarios/1-baseline.json",
+                "0A. BAU"
+            ],
+            [
+                "scenarios/1-baseline.json",
+                "1A. Base Case"
+            ],
+            [
+                "scenarios/2-BESS-500.json",
+                "1B. BESS 500 per kwh"
+            ]
+        ]
+    }  
+}
