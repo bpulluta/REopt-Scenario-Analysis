@@ -3,53 +3,107 @@ function run_and_get_results(scenarios, case, results_directory; mip_rel_stop)
     results = []
     results_dir = results_directory
 
-    bau_results = nothing  # Placeholder to store BAU results if found
-    last_scenario_file = ""  # To track the last processed scenario file
+    bau_results = nothing
+    last_scenario_file = ""
 
-    # Run optimization and get results for each scenario
+    # Function to create a solver
+    function create_solver()
+        try
+            return optimizer_with_attributes(Xpress.Optimizer, "MIPRELSTOP" => mip_rel_stop, "OUTPUTLOG" => 0)
+        catch
+            @warn "Xpress solver not available. Falling back to HiGHS."
+            return optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop)
+        end
+    end
+
     for (i, (scenario_file, scenario_name)) in enumerate(scenarios)
         println("=========================== Running scenario: $scenario_name ===========================")
 
-        # Check if the current scenario uses the same file as the previous scenario
         if scenario_file == last_scenario_file && bau_results != nothing
             println("Reusing results from previous scenario for: $scenario_name")
-            reused_results = deepcopy(bau_results)  # Create a shallow copy of the results
+            reused_results = deepcopy(bau_results)
             push!(results, reused_results)
             push!(reopt_results, reused_results)
             continue
         end
 
-        # Read the scenario file
         scenario_data = JSON.parsefile(scenario_file)
-
-        # Check if 'off_grid_flag' exists and is true
         offgrid = get(scenario_data, "Settings", Dict()) |> d -> get(d, "off_grid_flag", false)
 
         if offgrid
-            # New behavior for offgrid scenarios
-            m = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
+            m = Model(create_solver())
             results_i = run_reopt(m, scenario_file)
         else
-            # Original behavior
-            m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
-            m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
+            m1 = Model(create_solver())
+            m2 = Model(create_solver())
             results_i = run_reopt([m1, m2], scenario_file)
         end
         
         push!(results, results_i)
         push!(reopt_results, results_i)
 
-        # Store the results for reuse in the next iteration if the scenario file is the same
         bau_results = results_i
-        last_scenario_file = scenario_file  # Update last scenario file
+        last_scenario_file = scenario_file
     end
     
-    # Serialize and save reopt_results and results to disk
     serialize(open(joinpath(results_dir, "$case-reopt_results.bin"), "w"), reopt_results)
     serialize(open(joinpath(results_dir, "$case-results.bin"), "w"), results)
 
     return reopt_results, results
 end
+
+# function run_and_get_results(scenarios, case, results_directory; mip_rel_stop)
+#     reopt_results = []
+#     results = []
+#     results_dir = results_directory
+
+#     bau_results = nothing  # Placeholder to store BAU results if found
+#     last_scenario_file = ""  # To track the last processed scenario file
+
+#     # Run optimization and get results for each scenario
+#     for (i, (scenario_file, scenario_name)) in enumerate(scenarios)
+#         println("=========================== Running scenario: $scenario_name ===========================")
+
+#         # Check if the current scenario uses the same file as the previous scenario
+#         if scenario_file == last_scenario_file && bau_results != nothing
+#             println("Reusing results from previous scenario for: $scenario_name")
+#             reused_results = deepcopy(bau_results)  # Create a shallow copy of the results
+#             push!(results, reused_results)
+#             push!(reopt_results, reused_results)
+#             continue
+#         end
+
+#         # Read the scenario file
+#         scenario_data = JSON.parsefile(scenario_file)
+
+#         # Check if 'off_grid_flag' exists and is true
+#         offgrid = get(scenario_data, "Settings", Dict()) |> d -> get(d, "off_grid_flag", false)
+
+#         if offgrid
+#             # New behavior for offgrid scenarios
+#             m = Model(Cbc.Optimizer)
+#             results_i = run_reopt(m, scenario_file)
+#         else
+#             # Original behavior
+#             m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
+#             m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
+#             results_i = run_reopt([m1, m2], scenario_file)
+#         end
+        
+#         push!(results, results_i)
+#         push!(reopt_results, results_i)
+
+#         # Store the results for reuse in the next iteration if the scenario file is the same
+#         bau_results = results_i
+#         last_scenario_file = scenario_file  # Update last scenario file
+#     end
+    
+#     # Serialize and save reopt_results and results to disk
+#     serialize(open(joinpath(results_dir, "$case-reopt_results.bin"), "w"), reopt_results)
+#     serialize(open(joinpath(results_dir, "$case-results.bin"), "w"), results)
+
+#     return reopt_results, results
+# end
 
 function post_process_results(site, scenarios, reopt_results, results, case, results_directory, current_gen_size)
     results_dir = results_directory

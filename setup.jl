@@ -17,7 +17,8 @@ packages = [
     "JSON",
     "Random",
     "Printf",
-    "DataStructures"
+    "DataStructures",
+    "Cbc"
 ]
 
 println("Installing packages...")
