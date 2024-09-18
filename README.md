@@ -48,7 +48,7 @@ REopt-Scenario-Analysis/
 │   ├── reopt_load_scaling.jl
 │   ├── reopt_groupedbarplot.jl
 │   └── reopt_getdata.jl
-├── main/
+├── ScenarioAnalysis/
 │   └── REoptScenarioAnalysis.ipynb
 ├── examples/
 ├── projects/
