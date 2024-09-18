@@ -26,11 +26,31 @@ function get_REopt_data(data_f, scenario_name; cur_gen_size = 0, shorthand=false
         (df -> get_with_suffix(df, "CHP.size_kw", 0), "CHP (kW)", false),
         (df -> cur_gen_size, "Current Gen. Capacity (kW)", false),
         (df -> get(df, "Generator.size_kw", 0) - cur_gen_size, "Add-on Gen. Capacity (kW)", false),
-        (df -> get_with_suffix(df, "Financial.lifecycle_capital_costs", 0), "Net Capital Cost (\$)", true),
-        (df -> get_with_suffix(df, "Financial.initial_capital_costs", 0), "Initial Capital Cost without Incentives (\$)", true),
-        (df -> get_with_suffix(df, "Financial.initial_capital_costs_after_incentives", 0), "Initial Capital Cost with Incentives  (\$)", true),
-        (df -> get_with_suffix(df, "Financial.year_one_om_costs_before_tax", 0), "Annual OM Cost  (\$)", true),
-        (df -> get_with_suffix(df, "Financial.lifecycle_MG_upgrade_and_fuel_cost", 0), "Microgrid Upgrade and Fuel Cost (\$)", true),
+        (
+            df -> get_with_suffix(df, "Financial.lifecycle_capital_costs", 0),
+            "Total Capital Costs (including replacements and incentives) (\$)",
+            true
+        ),        
+        (
+            df -> get_with_suffix(df, "Financial.initial_capital_costs", 0),
+            "Initial Capital Cost (excluding incentives and replacements) (\$)",
+            true
+        ),
+        (
+            df -> get_with_suffix(df, "Financial.initial_capital_costs_after_incentives", 0),
+            "Initial Capital Cost (including incentives, excluding replacements) (\$)",
+            true
+        ),
+        (
+            df -> get_with_suffix(df, "Financial.year_one_om_costs_before_tax", 0),
+            "Year 1 O&M Costs (before tax) (\$)",
+            true
+        ),
+        (
+            df -> get_with_suffix(df, "Financial.lifecycle_MG_upgrade_and_fuel_cost", 0),
+            "Lifecycle Microgrid Upgrade and Fuel Costs (\$)",
+            true
+        ),
         (df -> get_with_suffix(df, "Generator.year_one_fuel_cost_before_tax", 0), "Annual Generator Fuel Cost (\$)", true),
         (df -> round(100*get_with_suffix(df, "Site.renewable_electricity_fraction", 0)), "RE Penetration (%)", false),
         (df -> get_with_suffix(df, "Site.annual_emissions_tonnes_CO2", 0), "Annual CO2 Emissions (Tons)", false),
@@ -55,8 +75,16 @@ function get_REopt_data(data_f, scenario_name; cur_gen_size = 0, shorthand=false
         (df -> get_with_suffix(df, "ElectricTariff.lifecycle_fixed_cost_after_tax", 0) + get_with_suffix(df, "ElectricTariff.lifecycle_demand_cost_after_tax", 0) + get_with_suffix(df, "ElectricTariff.lifecycle_energy_cost_after_tax", 0), "Lifecycle Utility Electricity Cost (\$)", true),
         # (df -> round(100 * get_with_suffix(df, "Financial.npv", 0) / get_with_suffix(df, "Financial.lcc_bau", 1)), "Lifecycle Savings (%)", false),
         (df -> get_with_suffix(df, "Financial.simple_payback_years", 0), "Payback Period (Years)", false),
-        (df -> get_with_suffix(df, "Financial.lcc", 0), "Total Lifecycle Cost (\$)", true),
-        (df -> get_with_suffix(df, "Financial.npv", 0), "Net Present Value (\$)", true),
+        (
+            df -> get_with_suffix(df, "Financial.lcc", 0),
+            "Total Lifecycle Cost (LCC) (\$)",
+            true
+        ),
+        (
+            df -> get_with_suffix(df, "Financial.npv", 0),
+            "Net Present Value (NPV) (\$)",
+            true
+        ),
         (df -> round(100 * (get_with_suffix(df, "Financial.npv", 0)) / (get_with_suffix(df, "Financial.lcc_bau", 1) + 1e-6)),"Savings Compared to BAU (%)", false),
         (df -> get_with_suffix(df, "Financial.offgrid_microgrid_lcoe_dollars_per_kwh", 0), "Microgrid LCOE", false),
         (df -> sum_numeric(get_with_suffix(df, "PV.electric_to_load_series_kw", 0)), "Annual PV to Load (kWh)", false),
@@ -65,11 +93,27 @@ function get_REopt_data(data_f, scenario_name; cur_gen_size = 0, shorthand=false
         # (df -> sum_numeric(get_with_suffix(df, "PV.electric_curtailed_series_kw", [])), "PV Curtailed", false),                    #1
         # (df -> get_with_suffix(df, "PV.lcoe_per_kwh", 0), "PV Levelized Cost of Energy (\$/kWh)", false),
         (df -> get_with_suffix(df, "ElectricTariff.year_one_export_benefit_before_tax", 0), "Year 1 Net Metering Benefit (\$)", true),
-        (df -> get_with_suffix(df, "Financial.annualized_payment_to_third_party", 0), "Annual Payment to Third-Party (\$)", true),
-        (df -> round(get_with_suffix(df, "Financial.annualized_payment_to_third_party", 0)/12), "Monthly Payment to Third-Party (\$)", true),
+        (
+            df -> get_with_suffix(df, "Financial.annualized_payment_to_third_party", 0),
+            "Annual Third-Party Payment (\$)",
+            true
+        ),
+        (
+            df -> round(get_with_suffix(df, "Financial.annualized_payment_to_third_party", 0)/12),
+            "Monthly Third-Party Payment (\$)",
+            true
+        ),
         # (df -> get_with_suffix(df, "Financial.lifecycle_capital_costs", 0)/get_with_suffix(df, "Financial.lcc_bau", 1), "Simple Payback Period (Years)", true),
-        (df -> get_with_suffix(df, "Financial.lifecycle_generation_tech_capital_costs", 0), "PV Installed Cost (\$)", true),
-        (df -> get_with_suffix(df, "Financial.lifecycle_storage_capital_costs", 0), "Battery Installed Cost (\$)", true),
+        (
+            df -> get_with_suffix(df, "Financial.lifecycle_generation_tech_capital_costs", 0),
+            "PV System Lifecycle Cost (including replacements and incentives) (\$)",
+            true
+        ),
+        (
+            df -> get_with_suffix(df, "Financial.lifecycle_storage_capital_costs", 0),
+            "Battery System Lifecycle Cost (including replacements and incentives) (\$)",
+            true
+        ),
     ]
 
     # Flatten the dictionary
@@ -219,6 +263,77 @@ function format_shorthand(num; currency_symbol="\$")
     end
 end
 
+# function prepare_table_data(all_scenarios)
+#     all_keys = Set{String}()
+#     scenario_data = Dict{String, Dict{String, Any}}()
+
+#     # Collect data and all keys across scenarios
+#     for (case, scenarios) in all_scenarios
+#         for (path, scenario_name) in scenarios
+#             json_data = JSON.parse(open(path))
+#             scenario_dict = Dict{String, Any}()
+#             full_scenario_name = case * ": " * scenario_name
+
+#             for key in keys(json_data)
+#                 value = json_data[key]
+#                 push!(all_keys, key)
+
+#                 # Process the value accordingly
+#                 if isa(value, Array)
+#                     if all(v -> isa(v, Number), value)
+#                         scenario_dict[key] = round(mean(value), digits=2)
+#                     elseif all(v -> isa(v, Dict), value)
+#                         scenario_dict[key] = process_array_of_dicts(value)
+#                     else
+#                         scenario_dict[key] = value
+#                     end
+#                 elseif isa(value, Dict)
+#                     scenario_dict[key] = process_dict(value)
+#                 else
+#                     scenario_dict[key] = value
+#                 end
+#             end
+
+#             scenario_data[full_scenario_name] = scenario_dict
+#         end
+#     end
+
+#     sorted_scenario_names = sort(collect(keys(scenario_data)))
+#     sorted_all_keys = sort(collect(all_keys))
+
+#     num_scenarios = length(sorted_scenario_names)
+#     num_columns = length(sorted_all_keys) + 1  # +1 for scenario names
+#     table_data = Array{Any}(undef, num_scenarios, num_columns)
+
+#     # Fill in the table with sorted scenario names and formatted data
+#     for (i, full_scenario_name) in enumerate(sorted_scenario_names)
+#         scenario = scenario_data[full_scenario_name]
+#         table_data[i, 1] = full_scenario_name  # Scenario name
+
+#         for (j, key) in enumerate(sorted_all_keys)
+#             if haskey(scenario, key)
+#                 value = scenario[key]
+#                 if isa(value, Dict)
+#                     table_data[i, j + 1] = format_dict(value)
+#                 elseif isa(value, Array)
+#                     if all(v -> isa(v, Dict), value)
+#                         table_data[i, j + 1] = format_array_of_dicts(value)
+#                     else
+#                         table_data[i, j + 1] = "\"" * replace(string(value), ", " => ",\n") * "\""  # Replace ', ' with ',\n' for line breaks
+#                     end
+#                 else
+#                     formatted_value = "\"" * replace(string(value), ", " => ",\n") * "\""  # Replace ', ' with ',\n' for line breaks
+#                     table_data[i, j + 1] = formatted_value
+#                 end
+#             else
+#                 table_data[i, j + 1] = "*** NOT INCLUDED ***"
+#             end
+#         end
+#     end
+
+#     return table_data, ["Scenario"; sorted_all_keys]
+# end
+
 function prepare_table_data(all_scenarios)
     all_keys = Set{String}()
     scenario_data = Dict{String, Dict{String, Any}}()
@@ -261,6 +376,15 @@ function prepare_table_data(all_scenarios)
     num_columns = length(sorted_all_keys) + 1  # +1 for scenario names
     table_data = Array{Any}(undef, num_scenarios, num_columns)
 
+    # Function to compare values and highlight differences
+    function highlight_diff(value1, value2)
+        if value1 == value2
+            return value1
+        else
+            return "**DIFF** " * string(value1)
+        end
+    end
+
     # Fill in the table with sorted scenario names and formatted data
     for (i, full_scenario_name) in enumerate(sorted_scenario_names)
         scenario = scenario_data[full_scenario_name]
@@ -269,17 +393,24 @@ function prepare_table_data(all_scenarios)
         for (j, key) in enumerate(sorted_all_keys)
             if haskey(scenario, key)
                 value = scenario[key]
-                if isa(value, Dict)
-                    table_data[i, j + 1] = format_dict(value)
+                formatted_value = if isa(value, Dict)
+                    format_dict(value)
                 elseif isa(value, Array)
                     if all(v -> isa(v, Dict), value)
-                        table_data[i, j + 1] = format_array_of_dicts(value)
+                        format_array_of_dicts(value)
                     else
-                        table_data[i, j + 1] = "\"" * replace(string(value), ", " => ",\n") * "\""  # Replace ', ' with ',\n' for line breaks
+                        "\"" * replace(string(value), ", " => ",\n") * "\""
                     end
                 else
-                    formatted_value = "\"" * replace(string(value), ", " => ",\n") * "\""  # Replace ', ' with ',\n' for line breaks
+                    "\"" * replace(string(value), ", " => ",\n") * "\""
+                end
+
+                # Compare with the first scenario (baseline)
+                if i == 1
                     table_data[i, j + 1] = formatted_value
+                else
+                    baseline_value = table_data[1, j + 1]
+                    table_data[i, j + 1] = highlight_diff(formatted_value, baseline_value)
                 end
             else
                 table_data[i, j + 1] = "*** NOT INCLUDED ***"

@@ -155,9 +155,9 @@ function create_plot(columns, json_file::AbstractString, selected_scenarios::Abs
     # Create separate NPV plot
     npv_plot = PlotlyJS.bar(
         x            =   x,
-        y            =   data[:, "Net Present Value (\$)"],  # Corrected column name
+        y            =   data[:, "Net Present Value (NPV) (\$)"],  # Corrected column name
         name         =   "Net Present Value",
-        text         =   convert_to_shorthand(data[:, "Net Present Value (\$)"]),  # Corrected column name
+        text         =   convert_to_shorthand(data[:, "Net Present Value (NPV) (\$)"]),  # Corrected column name
         textposition =   "outside",
         textfont     =   attr(size = fsize, family = "Arial"),
         width        =   0.8,
@@ -200,9 +200,9 @@ function create_plot(columns, json_file::AbstractString, selected_scenarios::Abs
     # Create separate Net Capital Cost plot
     capcost_plot = PlotlyJS.bar(
         x            =   x,
-        y            =   data[:, "Net Capital Cost (\$)"],  # Corrected column name
+        y            =   data[:, "Total Capital Costs (including replacements and incentives) (\$)"],  # Corrected column name
         name         =   "Net Capital Cost",
-        text         =   convert_to_shorthand(data[:, "Net Capital Cost (\$)"]),  # Corrected column name
+        text         =   convert_to_shorthand(data[:, "Total Capital Costs (including replacements and incentives) (\$)"]),  # Corrected column name
         textposition =   "outside",
         textfont     =   attr(size = fsize, family = "Arial"),
         width        =   0.8,

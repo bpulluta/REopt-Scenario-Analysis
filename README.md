@@ -1,6 +1,6 @@
 # REopt Scenario Analysis
 
-REopt Scenario Analysis is a Julia-based tool for analyzing and visualizing REopt (Renewable Energy Optimization) scenarios. It provides functionalities for running scenarios, plotting results, and performing various data analyses related to renewable energy systems.
+REopt Scenario Analysis is a Julia-based tool for analyzing and visualizing REopt scenarios. It provides functionalities for running scenarios, plotting results, and performing various data analyses related to renewable energy systems.
 
 ## Features
 
@@ -27,14 +27,12 @@ REopt Scenario Analysis is a Julia-based tool for analyzing and visualizing REop
 
    Note: You need to have Julia installed on your system. This project was developed with Julia 1.6+.
 
-3. Ensure you have the necessary licenses for commercial packages (e.g., HiGHS).
-
-4. Install Jupyter if you haven't already. You can do this via pip:
+3. Install Jupyter if you haven't already. You can do this via pip:
    ```
    pip install jupyter
    ```
 
-5. Install the Julia kernel for Jupyter:
+4. Install the Julia kernel for Jupyter:
    ```julia
    using Pkg
    Pkg.add("IJulia")
@@ -119,15 +117,6 @@ We welcome contributions to the REopt Scenario Analysis project! Here are some w
 
 Please ensure that your code adheres to the existing style and that all tests pass before submitting a pull request.
 
-## Testing
-
-To run the test suite:
-
-```julia
-using Pkg
-Pkg.activate(".")
-Pkg.test()
-```
 
 ## License
 
@@ -135,7 +124,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- This project uses the REopt API developed by NREL.
+- This project uses the REopt Julia Package developed by NREL.
 - Thanks to all contributors who have helped shape this project.
 
 ## Contact

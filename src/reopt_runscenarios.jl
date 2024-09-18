@@ -27,12 +27,12 @@ function run_and_get_results(scenarios, case, results_directory; mip_rel_stop)
 
         if offgrid
             # New behavior for offgrid scenarios
-            m = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false))
+            m = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
             results_i = run_reopt(m, scenario_file)
         else
             # Original behavior
-            m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false))
-            m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false))
+            m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
+            m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
             results_i = run_reopt([m1, m2], scenario_file)
         end
         
@@ -51,41 +51,48 @@ function run_and_get_results(scenarios, case, results_directory; mip_rel_stop)
     return reopt_results, results
 end
 
-function post_process_results(site, scenarios, reopt_results, results, case, results_directory,current_gen_size)
+function post_process_results(site, scenarios, reopt_results, results, case, results_directory, current_gen_size)
     results_dir = results_directory
     df_list  =   []
     df_listb =   []
     
-    # # Extract the existing generator size from the first result in reopt_results
     existing_gen_size = current_gen_size
 
     for (i, results_i) in enumerate(reopt_results)
         scenario_file, scenario_name = scenarios[i]
         
+        # Re-check if this scenario is off-grid
+        scenario_data = JSON.parsefile(scenario_file)
+        offgrid = get(scenario_data, "Settings", Dict()) |> d -> get(d, "off_grid_flag", false)
+        
         try
-            # Simulate Outages first
-            outage = simulate_outages(results_i, REoptInputs(scenario_file))
-            
-            # Embed the entire outage dictionary into results_i if outage data exists
-            if !isnothing(outage)
-                results_i["outage_sim_res"] = outage
+            if !offgrid
+                # Simulate Outages only for grid-connected scenarios
+                outage = simulate_outages(results_i, REoptInputs(scenario_file))
                 
-                # Generate DataFrames with the updated results_i data
-                df_i  = get_REopt_data(results_i, scenario_name, cur_gen_size = existing_gen_size, shorthand=false)
-                df_ib = get_REopt_data(results_i, scenario_name, cur_gen_size = existing_gen_size, shorthand=true)
-            
-                # Add df_i and df_ib to their respective lists
-                push!(df_list, df_i)
-                push!(df_listb, df_ib)
+                if !isnothing(outage)
+                    results_i["outage_sim_res"] = outage
+                    
+                    # Create outage plot
+                    create_outage_plot(results_i, joinpath(results_dir, "$case-$site-$scenario_name-outage-plots.html"))
                 
-                # Create outage plot
-                create_outage_plot(results_i, joinpath(results_dir, "$case-$site-$scenario_name-outage-plots.html"))
-            
-                # Save outage data to JSON
-                JSON3.write(joinpath(results_dir, "$case-$site-$scenario_name-outage-results.json"), outage)
+                    # Save outage data to JSON
+                    JSON3.write(joinpath(results_dir, "$case-$site-$scenario_name-outage-results.json"), outage)
+                else
+                    println("No outage data for $scenario_name, skipping outage-specific operations.")
+                end
             else
-                println("No outage data for $scenario_name, skipping outage-specific operations.")
+                println("Skipping outage simulation for off-grid scenario: $scenario_name")
             end
+            
+            # Generate DataFrames with the results_i data
+            df_i  = get_REopt_data(results_i, scenario_name, cur_gen_size = existing_gen_size, shorthand=false)
+            df_ib = get_REopt_data(results_i, scenario_name, cur_gen_size = existing_gen_size, shorthand=true)
+        
+            # Add df_i and df_ib to their respective lists
+            push!(df_list, df_i)
+            push!(df_listb, df_ib)
+            
         catch e
             println("Error processing scenario $scenario_name: ", e)
             continue  # Skip this iteration and move on to the next
@@ -295,6 +302,7 @@ function save_df(df_list, results_directory, filename)
 
     CSV.write(joinpath(results_dir, filename), final_df, transform=(col, val) -> something(val, "-"))
 end
+
 
 # Function to create necessary directories and check for required JSON files
 function setup_project_directory(base_path::String, site_name::String)
