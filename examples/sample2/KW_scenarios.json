@@ -1,0 +1,14 @@
+{
+    "sample2": {
+        "Cost-Optimal":[
+            [
+                "scenarios/PV_ONLY-60ITC.json",
+                "0A. BAU"
+            ],
+            [
+                "scenarios/PV_ONLY-60ITC.json",
+                "1A. PV ONLY - 60% ITC"
+            ]
+        ]
+    }  
+}

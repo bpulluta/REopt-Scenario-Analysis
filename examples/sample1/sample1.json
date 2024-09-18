@@ -1,0 +1,14 @@
+{
+    "sample1s": {
+        "Cost-Optimal":[
+            [
+                "scenarios/baseline.json",
+                "0A. BAU"
+            ],
+            [
+                "scenarios/baseline.json",
+                "1A. Base Case"
+            ]
+        ]
+    }  
+}

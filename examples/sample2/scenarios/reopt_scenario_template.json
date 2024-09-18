@@ -1,0 +1,12 @@
+{
+  "ElectricTariff": { "urdb_label": "6524689a4a37bbdf8701e162" },
+  "Site": { "latitude": 0.0, "longitude": -0.0 },
+  "ElectricLoad": { "loads_kw": [1, 2, 3], "year": 2024 },
+  "PV": {
+    "array_type": 0,
+    "macrs_option_years": 5,
+    "module_type": 0,
+    "can_net_meter": true,
+    "macrs_bonus_fraction": 0.8
+  }
+}
