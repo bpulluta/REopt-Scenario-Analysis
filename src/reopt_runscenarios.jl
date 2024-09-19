@@ -362,38 +362,145 @@ end
 function setup_project_directory(base_path::String, site_name::String)
     project_path = joinpath(base_path, site_name)
     scenarios_path = joinpath(project_path, "scenarios")
+    placeholders_created = false
+    scenarios_file_reconstructed = false
 
+    # Check if directories exist
     for path in [project_path, scenarios_path]
         if !isdir(path)
             mkdir(path)
             println("Created directory: $path")
+        else
+            println("Directory already exists: $path")
         end
     end
 
-    # JSON scenario structure
-    scenarios_json = Dict(
+    # Check for existing scenario JSON file
+    scenarios_json_path = joinpath(project_path, site_name * "_scenarios.json")
+    if isfile(scenarios_json_path)
+        println("Existing scenarios file found: $scenarios_json_path")
+        
+        # Read the content of the file
+        file_content = read(scenarios_json_path, String)
+        
+        if isempty(file_content)
+            println("WARNING: The scenarios file is empty. Creating a default structure.")
+            scenarios_json = create_default_scenarios(site_name)
+            scenarios_file_reconstructed = true
+        else
+            try
+                scenarios_json = JSON.parse(file_content)
+                if !haskey(scenarios_json, site_name)
+                    println("WARNING: The scenarios file does not contain the expected structure. Creating a default structure.")
+                    scenarios_json = create_default_scenarios(site_name)
+                    scenarios_file_reconstructed = true
+                end
+            catch e
+                println("ERROR: Failed to parse the scenarios file. Creating a default structure.")
+                println("Parse error: ", e)
+                scenarios_json = create_default_scenarios(site_name)
+                scenarios_file_reconstructed = true
+            end
+        end
+    else
+        println("Scenarios file not found. Creating a new one with default structure.")
+        scenarios_json = create_default_scenarios(site_name)
+        scenarios_file_reconstructed = true
+    end
+
+    # Save the scenarios JSON (either parsed or newly created)
+    open(scenarios_json_path, "w") do file
+        JSON.print(file, scenarios_json, 4)  # 4 spaces for indentation
+    end
+    println("Scenarios file saved: $scenarios_json_path")
+
+    # Check for existing scenario files
+    missing_scenarios = []
+    for (group_name, scenarios) in scenarios_json[site_name]
+        for (scenario_file, scenario_name) in scenarios
+            full_scenario_path = joinpath(project_path, scenario_file)
+            if !isfile(full_scenario_path)
+                push!(missing_scenarios, (scenario_file, scenario_name))
+            end
+        end
+    end
+
+    if !isempty(missing_scenarios)
+        println("The following scenario files are missing and will be created as placeholders:")
+        for (file, name) in missing_scenarios
+            println("- $name ($file)")
+            create_placeholder_scenario(joinpath(project_path, file))
+        end
+        placeholders_created = true
+    end
+
+    if placeholders_created || scenarios_file_reconstructed
+        println("\nIMPORTANT: Ensure that ALL scenario files are updated with your specific data before running REopt.")
+        println("Using placeholder or incorrectly configured files will result in errors or incorrect results.")
+        
+        error_message = """
+        IMPORTANT: Action Required Before Proceeding!
+
+        1. File Update Needed:
+           - Ensure that ALL scenario files are updated with your specific data before running REopt.
+           - Using placeholder or incorrectly configured files will result in errors or incorrect results.
+
+        2. Check File Names and Structure:
+           There might be a mismatch between the expected and actual file names or structure.
+           
+           a) Scenarios File Naming:
+              - The scenarios file should be named: <SiteName>_scenarios.json
+              - Example: If your folder is named 'PlaceholderSite1', the file should be 'PlaceholderSite1_scenarios.json'
+
+           b) Scenarios File Structure:
+              The content of <SiteName>_scenarios.json should follow this structure:
+              {
+                  "<SiteName>": {
+                      "PlaceholderGroupName": [
+                          ["scenarios/0a_BAU.json", "0a. BAU "],
+                          ["scenarios/1a_PV_Only_Scenario.json", "1a. PV Only Scenario"]
+                      ]
+                  }
+              }
+
+           c) Common Naming Issues:
+              - Spelling errors (e.g., 'senario' instead of 'scenario')
+              - Capitalization differences (e.g., 'Bau' instead of 'BAU')
+              - Incorrect file extensions (e.g., '.JSON' instead of '.json')
+
+        3. Verify JSON Structure and File Existence:
+           - Ensure your scenarios JSON file has the correct structure as shown above.
+           - Verify that all scenario files specified in the JSON actually exist in the 'scenarios' folder.
+
+        4. Next Steps:
+           - Review and correct any issues in your file names and structure.
+           - Update placeholder files with your specific scenario data.
+           - Rerun the notebook after making the necessary corrections.
+
+        If you continue to experience issues, please double-check all file names and paths for accuracy.
+        """
+        throw(ErrorException(error_message))
+    end
+
+    return project_path
+end
+
+function create_default_scenarios(site_name::String)
+    Dict(
         site_name => Dict(
-            "Group1Name" => [
-                ["scenarios/reopt_scenario_template.json", "0a. BAU"],
-                ["scenarios/reopt_scenario_template.json", "1a. PV Only Scenario"],
+            "PlaceholderGroupName" => [
+                ["scenarios/0a_BAU.json", "0a. BAU"],
+                ["scenarios/1a_PV_Only_Scenario.json", "1a. PV Only Scenario"],
             ]
         )
     )
+end
 
-    # Check and create scenario JSON file
-    scenarios_json_path = joinpath(project_path, site_name * "_scenarios.json")
-    if !isfile(scenarios_json_path)
-        open(scenarios_json_path, "w") do file
-            JSON.print(file, scenarios_json)
-        end
-        println("Created JSON scenario file: $scenarios_json_path")
-    end
-
-    # Placeholder for reopt_template.json
-    reopt_template = Dict(
-        "ElectricTariff" => Dict("urdb_label" => "6524689a4a37bbdf8701e162"),
-        "Site" => Dict("latitude" => 0.00, "longitude" => -0.00),
-        "ElectricLoad" => Dict("loads_kw" => [1, 2, 3], "year" => 2024),
+function create_placeholder_scenario(file_path::String)
+    placeholder_scenario = Dict(
+        "ElectricTariff" => Dict("urdb_label" => "PLACEHOLDER_URDB_LABEL"),
+        "Site" => Dict("latitude" => 0.00, "longitude" => 0.00),
+        "ElectricLoad" => Dict("loads_kw" => [0], "year" => 2024),
         "PV" => Dict(
             "array_type" => 0,
             "macrs_option_years" => 5,
@@ -402,16 +509,9 @@ function setup_project_directory(base_path::String, site_name::String)
             "macrs_bonus_fraction" => 0.8
         )
     )
-
-    # Check and create reopt_template.json in the scenarios folder
-    template_json_path = joinpath(scenarios_path, "reopt_scenario_template.json")
-    if !isfile(template_json_path)
-        open(template_json_path, "w") do file
-            JSON.print(file, reopt_template)
-        end
-        println("Created REopt template JSON file: $template_json_path")
+    
+    open(file_path, "w") do file
+        JSON.print(file, placeholder_scenario, 4)  # 4 spaces for indentation
     end
-
-    return project_path
+    println("Created placeholder scenario file: $file_path")
 end
-

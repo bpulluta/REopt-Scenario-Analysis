@@ -1,6 +1,6 @@
 {
-    "example1": {
-        "Cost-Optimal":[
+    "indonesia": {
+        "Cost-Optimal": [
             [
                 "scenarios/1-baseline.json",
                 "0A. BAU"
@@ -14,5 +14,5 @@
                 "1B. BESS 500 per kwh"
             ]
         ]
-    }  
+    }
 }

@@ -25,7 +25,7 @@ function get_REopt_data(data_f, scenario_name; cur_gen_size = 0, shorthand=false
         (df -> get_with_suffix(df, "ElectricStorage.size_kwh", 0), "Battery Capacity (kWh)", false),
         (df -> get_with_suffix(df, "CHP.size_kw", 0), "CHP (kW)", false),
         (df -> cur_gen_size, "Current Gen. Capacity (kW)", false),
-        (df -> get(df, "Generator.size_kw", 0) - cur_gen_size, "Add-on Gen. Capacity (kW)", false),
+        (df -> get_with_suffix(df, "Generator.size_kw", 0) - cur_gen_size, "Add-on Gen. Capacity (kW)", false),
         (
             df -> get_with_suffix(df, "Financial.lifecycle_capital_costs", 0),
             "Total Capital Costs (including replacements and incentives) (\$)",

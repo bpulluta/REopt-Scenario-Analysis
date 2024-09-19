@@ -215,7 +215,7 @@ function create_plot(columns, json_file::AbstractString, selected_scenarios::Abs
     # Create separate MG LCOE plot
     lcoe_plot = PlotlyJS.bar(
         x            =   x,
-        y            =   map(x -> parse(Float64, x), data[:, "Microgrid LCOE"]),  # Corrected column name
+        y            =   map(x -> x == "-" ? 0.0 : parse(Float64, x), data[:, "Microgrid LCOE"]),
         name         =   "Microgrid LCOE",
         text         =   data[:, "Microgrid LCOE"],  # Corrected column name
         textposition =   "outside",
