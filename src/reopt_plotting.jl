@@ -847,50 +847,95 @@ function update_cases_outage_times(scenarios_dict)
 end
 
 function plot_scenario_location(all_scenarios, folderpath, site)
-    latlongs = Dict()
+    # Use a dictionary to store unique coordinates with their descriptors
+    location_info = Dict{Tuple{Float64, Float64}, Vector{String}}()
 
-    for (case, scenarios) in all_scenarios
-        for (path, _) in scenarios
-            latlong_data = JSON.parse(open(path))
-
-            if haskey(latlong_data, "Site")
-                site_data = latlong_data["Site"]
-                if haskey(site_data, "latitude") && haskey(site_data, "longitude")
-                    latlongs[path] = (site_data["latitude"], site_data["longitude"])
+    for (_, scenarios) in all_scenarios
+        for (path, descriptor) in scenarios
+            latlong_data = JSON.parsefile(path)
+            site_data = get(latlong_data, "Site", nothing)
+            if site_data isa Dict
+                lat = get(site_data, "latitude", nothing)
+                lon = get(site_data, "longitude", nothing)
+                if lat isa Number && lon isa Number
+                    coords = (lat, lon)
+                    if haskey(location_info, coords)
+                        push!(location_info[coords], descriptor)
+                    else
+                        location_info[coords] = [descriptor]
+                    end
                 end
             end
         end
     end
 
-    unique_latlongs = unique(values(latlongs))
-    if length(unique_latlongs) == 1
-        # Original functionality for single location
-        latitude, longitude = first(unique_latlongs)
-        println("Latitude: ", latitude)
-        println("Longitude: ", longitude)
+    isempty(location_info) && error("No valid latitude/longitude pairs found in the data")
 
-        is_in_us = (-125.0, 24.0, -66.9, 49.384358)[1] <= longitude <= (-125.0, 24.0, -66.9, 49.384358)[3] && (-125.0, 24.0, -66.9, 49.384358)[2] <= latitude <= (-125.0, 24.0, -66.9, 49.384358)[4]
-        geo_attr = is_in_us ? attr(resolution=200, scope="usa", showcountries=true, countrycolor="white", showsubunits=true, subunitcolor="white") : attr()
+    lats, lons = first.(keys(location_info)), last.(keys(location_info))
 
-        trace = scattergeo(lat=[latitude], lon=[longitude],text=site, hoverinfo="text+lat+lon", mode="markers", marker=attr(size=18, color="rgb(247,162,47)", symbol="star"))
-        layout = Layout(geo=geo_attr, height=300, margin=attr(l=0, r=0, t=0, b=0))
+    # Define US bounding box
+    us_bounds = (-125.0, 24.0, -66.9, 49.384358)
+    
+    # Check if all points are within the US
+    is_in_us = all(us_bounds[1] <= lon <= us_bounds[3] && us_bounds[2] <= lat <= us_bounds[4] 
+                   for (lat, lon) in keys(location_info))
 
+    if length(location_info) == 1
+        # Single location
+        lat, lon = first(keys(location_info))
+        println("Latitude: ", lat)
+        println("Longitude: ", lon)
+
+        trace = scattergeo(
+            lat=[lat], lon=[lon],
+            text=[site], hoverinfo="text+lat+lon",
+            mode="markers",
+            marker=attr(size=18, color="rgb(247,162,47)", symbol="star")
+        )
     else
-        # New functionality for multiple locations
-        lats, lons= [], []
-        for (latitude, longitude) in unique_latlongs
-            push!(lats, latitude)
-            push!(lons, longitude)
-        end
-
-        trace = scattergeo(locationmode="USA-states", lat=lats, lon=lons, text=site, hoverinfo="text+lat+lon", marker_size=10, marker_line_color="black", marker_line_width=2)
-        geo = attr(scope="usa", projection_type="albers usa", showland=true, landcolor="white", subunitwidth=1, countrywidth=1, subunitcolor="white", countrycolor="rgb(255,255,255)")
-        layout = Layout(title="Scenario Locations", showlegend=false, geo=geo)
+        # Multiple locations
+        hover_texts = [join(descriptors, "<br>") for descriptors in values(location_info)]
+        trace = scattergeo(
+            lat=lats, lon=lons,
+            text=hover_texts, hoverinfo="text+lat+lon",
+            mode="markers",
+            marker=attr(size=10, color="rgb(247,162,47)", line_color="black", line_width=2)
+        )
     end
 
-    # Plot the map with the locations
+    # Set up the layout based on location
+    if is_in_us
+        geo = attr(
+            scope="usa",
+            projection_type="albers usa",
+            showland=true,
+            landcolor="white",
+            subunitwidth=1,
+            countrywidth=1,
+            subunitcolor="white",
+            countrycolor="rgb(255,255,255)"
+        )
+    else
+        geo = attr(
+            showland=true,
+            landcolor="white",
+            subunitwidth=1,
+            countrywidth=1,
+            subunitcolor="white",
+            countrycolor="rgb(255,255,255)"
+        )
+    end
+
+    layout = Layout(
+        title="Scenario Locations",
+        geo=geo,
+        height=600,
+        width=800,
+        margin=attr(l=0, r=0, t=50, b=0)
+    )
+
+    # Create and save the plot
     fig = plot(trace, layout)
-    # Save the figure
     file_path = joinpath(folderpath, "$site-plot.png")
     savefig(fig, file_path)
     

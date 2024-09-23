@@ -52,59 +52,6 @@ function run_and_get_results(scenarios, case, results_directory; mip_rel_stop)
     return reopt_results, results
 end
 
-# function run_and_get_results(scenarios, case, results_directory; mip_rel_stop)
-#     reopt_results = []
-#     results = []
-#     results_dir = results_directory
-
-#     bau_results = nothing  # Placeholder to store BAU results if found
-#     last_scenario_file = ""  # To track the last processed scenario file
-
-#     # Run optimization and get results for each scenario
-#     for (i, (scenario_file, scenario_name)) in enumerate(scenarios)
-#         println("=========================== Running scenario: $scenario_name ===========================")
-
-#         # Check if the current scenario uses the same file as the previous scenario
-#         if scenario_file == last_scenario_file && bau_results != nothing
-#             println("Reusing results from previous scenario for: $scenario_name")
-#             reused_results = deepcopy(bau_results)  # Create a shallow copy of the results
-#             push!(results, reused_results)
-#             push!(reopt_results, reused_results)
-#             continue
-#         end
-
-#         # Read the scenario file
-#         scenario_data = JSON.parsefile(scenario_file)
-
-#         # Check if 'off_grid_flag' exists and is true
-#         offgrid = get(scenario_data, "Settings", Dict()) |> d -> get(d, "off_grid_flag", false)
-
-#         if offgrid
-#             # New behavior for offgrid scenarios
-#             m = Model(Cbc.Optimizer)
-#             results_i = run_reopt(m, scenario_file)
-#         else
-#             # Original behavior
-#             m1 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
-#             m2 = Model(optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => false, "log_to_console" => false, "mip_rel_gap" => mip_rel_stop))
-#             results_i = run_reopt([m1, m2], scenario_file)
-#         end
-        
-#         push!(results, results_i)
-#         push!(reopt_results, results_i)
-
-#         # Store the results for reuse in the next iteration if the scenario file is the same
-#         bau_results = results_i
-#         last_scenario_file = scenario_file  # Update last scenario file
-#     end
-    
-#     # Serialize and save reopt_results and results to disk
-#     serialize(open(joinpath(results_dir, "$case-reopt_results.bin"), "w"), reopt_results)
-#     serialize(open(joinpath(results_dir, "$case-results.bin"), "w"), results)
-
-#     return reopt_results, results
-# end
-
 function post_process_results(site, scenarios, reopt_results, results, case, results_directory, current_gen_size)
     results_dir = results_directory
     df_list  =   []
@@ -286,56 +233,6 @@ function update_json_file(filepath, json_section, key, new_value)
     return true
 end
 
-# Function to update a specific key-value in a single scenario
-function update_single_scenario_key_value(case_key, scenario_index, json_section, key, new_value, scenarios_dict)
-    if haskey(scenarios_dict, case_key)
-        if scenario_index <= length(scenarios_dict[case_key])
-            filepath = scenarios_dict[case_key][scenario_index][1]  # Get the file path of the scenario
-            filename = basename(filepath)  # Extract the file name from the path
-
-            # Update and save the JSON file
-            updated = update_json_file(filepath, json_section, key, new_value)
-            if updated
-                println("Updated $key in $json_section for scenario file $filename to $new_value")
-            else
-                println("Section $json_section or key $key not found in scenario file $filename.")
-            end
-        else
-            println("Scenario index $scenario_index out of range for case $case_key.")
-        end
-    else
-        println("Case $case_key not found in scenarios.")
-    end
-end
-
-# Function to update a specific key-value in a specific case
-function update_case_key_value(case_key, json_section, key, new_value, scenarios_dict)
-    if haskey(scenarios_dict, case_key)
-        for (filepath, _) in scenarios_dict[case_key]
-            updated = update_json_file(filepath, json_section, key, new_value)
-            if !updated
-                println("Section $json_section or key $key not found in scenario file $filepath.")
-            end
-        end
-        println("Updated $key in $json_section for case $case_key to $new_value")
-    else
-        println("Case $case_key not found in scenarios.")
-    end
-end
-
-# Function to update a specific key-value in all cases
-function update_all_cases_key_value(json_section, key, new_value, scenarios_dict)
-    for (case, scenarios) in scenarios_dict
-        for (filepath, _) in scenarios
-            updated = update_json_file(filepath, json_section, key, new_value)
-            if !updated
-                println("Section $json_section or key $key not found in scenario file $filepath.")
-            end
-        end
-        println("Updated $key in $json_section for all cases to $new_value")
-    end
-end
-
 function save_df(df_list, results_directory, filename)
     final_df =   vcat(df_list...)
     results_dir = results_directory
@@ -497,16 +394,30 @@ function create_default_scenarios(site_name::String)
 end
 
 function create_placeholder_scenario(file_path::String)
-    placeholder_scenario = Dict(
-        "ElectricTariff" => Dict("urdb_label" => "PLACEHOLDER_URDB_LABEL"),
-        "Site" => Dict("latitude" => 0.00, "longitude" => 0.00),
-        "ElectricLoad" => Dict("loads_kw" => [0], "year" => 2024),
-        "PV" => Dict(
-            "array_type" => 0,
-            "macrs_option_years" => 5,
-            "module_type" => 0,
-            "can_net_meter" => true,
-            "macrs_bonus_fraction" => 0.8
+    placeholder_scenario = 
+    Dict(
+        "Site"=> Dict(
+            "longitude"=> -118.1164613,
+            "latitude"=> 34.5794343
+        ),
+        "PV"=> Dict(
+        ),
+        "ElectricLoad"=> Dict(
+            "doe_reference_name"=> "**PLACEHOLDER SITE - UPDATE WITH CORRECT DATA**",
+            "annual_kwh"=> 200000.0,
+            "year"=> 2017
+        ),
+        "ElectricTariff"=> Dict(
+            "urdb_label"=> "**PLACEHOLDER SITE - UPDATE WITH CORRECT DATA**"
+        ),
+        "ElectricUtility"=> Dict(
+            "net_metering_limit_kw"=> 1000
+        ),
+        "Financial"=> Dict(
+            "elec_cost_escalation_rate_fraction"=> 0.026,
+            "offtaker_discount_rate_fraction"=> 0.08,
+            "offtaker_tax_rate_fraction"=> 0.28,
+            "om_cost_escalation_rate_fraction"=> 0.025
         )
     )
     

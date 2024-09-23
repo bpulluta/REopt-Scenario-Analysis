@@ -18,7 +18,8 @@ packages = [
     "Random",
     "Printf",
     "DataStructures",
-    "Cbc"
+    "Cbc",
+    "Xpress"
 ]
 
 println("Installing packages...")
