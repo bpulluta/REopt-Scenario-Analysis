@@ -86,7 +86,7 @@ function get_REopt_data(data_f, scenario_name; cur_gen_size = 0, shorthand=false
             true
         ),
         (df -> round(100 * (get_with_suffix(df, "Financial.npv", 0)) / (get_with_suffix(df, "Financial.lcc_bau", 1) + 1e-6)),"Savings Compared to BAU (%)", false),
-        (df -> get_with_suffix(df, "Financial.offgrid_microgrid_lcoe_dollars_per_kwh", 0), "Microgrid LCOE(\$/kWh)", false),
+        (df -> get_with_suffix(df, "Financial.offgrid_microgrid_lcoe_dollars_per_kwh", 0), "Microgrid LCOE (\$/kWh)", false),
         (df -> sum_numeric(get_with_suffix(df, "PV.electric_to_load_series_kw", 0)), "Annual PV to Load (kWh)", false),
         (df -> sum_numeric(get_with_suffix(df, "ElectricStorage.storage_to_load_series_kw", 0)), "Annual Storage to Load (kWh)", false),
         (df -> sum_numeric(get_with_suffix(df, "Generator.electric_to_load_series_kw", 0)), "Annual Generator to Load (kWh)", false),

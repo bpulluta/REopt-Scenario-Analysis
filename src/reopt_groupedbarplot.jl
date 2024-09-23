@@ -47,12 +47,13 @@ function create_plot(columns, json_file::AbstractString, selected_scenarios::Abs
 
     selected_data = OrderedDict{String, Vector}()
     for (column, index) in columns
-        if column == "(\$/kWh)"
+        if column == "Microgrid LCOE (\$/kWh)"
             selected_data[column] = data["columns"][index][selected_scenarios]
         else
             selected_data[column] = map(clean_value, data["columns"][index][selected_scenarios])
         end
     end
+
 
     # Create DataFrame with specified column order
     data =   DataFrame([selected_data[column] for column in column_names], column_names)
@@ -215,9 +216,9 @@ function create_plot(columns, json_file::AbstractString, selected_scenarios::Abs
     # Create separate MG LCOE plot
     lcoe_plot = PlotlyJS.bar(
         x            =   x,
-        y            =   map(x -> x == "-" ? 0.0 : parse(Float64, x), data[:, "Microgrid LCOE(\$/kWh)"]),
+        y            =   map(x -> x == "-" ? 0.0 : parse(Float64, x), data[:, "Microgrid LCOE (\$/kWh)"]),
         name         =   "Microgrid LCOE",
-        text         =   data[:, "Microgrid LCOE(\$/kWh)"],  # Corrected column name
+        text         =   data[:, "Microgrid LCOE (\$/kWh)"],  # Corrected column name
         textposition =   "outside",
         textfont     =   attr(size = fsize, family = "Arial"),
         width        =   0.8,
@@ -385,8 +386,7 @@ function create_general_plots(site::String,
     layout_p3 = create_subplot_layout(layout, "Payback Period", "Years", [0, 30], common_fsize)
     layout_p4 = create_subplot_layout(layout, "Emissions Reduction", "Percent", [0, 120], common_fsize)
     layout_p5 = create_subplot_layout(layout, "Net Capital Cost", "\$", calc_axis_range(column_name="Total Capital Costs (including replacements and incentives) (\$)", df=df, start_at_zero=true), common_fsize)
-    layout_p6 = create_subplot_layout(layout, "", "\$/kWh", [0,1], common_fsize)
-
+    layout_p6 = create_subplot_layout(layout, "Microgrid LCOE", "\$/kWh", [0,1], common_fsize)
     
 
     # Create subplots with modified layouts
