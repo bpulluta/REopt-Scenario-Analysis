@@ -28,7 +28,7 @@ function get_REopt_data(data_f, scenario_name; cur_gen_size = 0, shorthand=false
         (df -> get_with_suffix(df, "Generator.size_kw", 0) - cur_gen_size, "Add-on Gen. Capacity (kW)", false),
         (
             df -> get_with_suffix(df, "Financial.lifecycle_capital_costs", 0),
-            "Total Capital Costs (including replacements and incentives) (\$)",
+            "Net Capital Costs (including replacements and incentives) (\$)",
             true
         ),        
         (
@@ -87,10 +87,12 @@ function get_REopt_data(data_f, scenario_name; cur_gen_size = 0, shorthand=false
         ),
         (df -> round(100 * (get_with_suffix(df, "Financial.npv", 0)) / (get_with_suffix(df, "Financial.lcc_bau", 1) + 1e-6)),"Savings Compared to BAU (%)", false),
         (df -> get_with_suffix(df, "Financial.offgrid_microgrid_lcoe_dollars_per_kwh", 0), "Microgrid LCOE (\$/kWh)", false),
-        (df -> sum_numeric(get_with_suffix(df, "PV.electric_to_load_series_kw", 0)), "Annual PV to Load (kWh)", false),
-        (df -> sum_numeric(get_with_suffix(df, "ElectricStorage.storage_to_load_series_kw", 0)), "Annual Storage to Load (kWh)", false),
-        (df -> sum_numeric(get_with_suffix(df, "Generator.electric_to_load_series_kw", 0)), "Annual Generator to Load (kWh)", false),
-        # (df -> sum_numeric(get_with_suffix(df, "PV.electric_curtailed_series_kw", [])), "PV Curtailed", false),                    #1
+        (df -> sum_numeric(get_with_suffix(df, "PV.electric_to_load_series_kw", 0)), "PV to Load (kWh)", false),
+        (df -> sum_numeric(get_with_suffix(df, "PV.electric_curtailed_series_kw", [])), "PV Curtailed (kWh)", false),
+        (df -> sum_numeric(get_with_suffix(df, "PV.electric_to_storage_series_kw", [])), "PV to Storage (kWh)", false),                    #1
+        (df -> sum_numeric(get_with_suffix(df, "ElectricStorage.storage_to_load_series_kw", 0)), "Storage to Load (kWh)", false),
+        (df -> sum_numeric(get_with_suffix(df, "Generator.electric_to_load_series_kw", 0)), "Generator to Load (kWh)", false),
+        (df -> sum_numeric(get_with_suffix(df, "Generator.electric_to_storage_series_kw", 0)), "Generator to Storage (kWh)", false),
         # (df -> get_with_suffix(df, "PV.lcoe_per_kwh", 0), "PV Levelized Cost of Energy (\$/kWh)", false),
         (df -> get_with_suffix(df, "ElectricTariff.year_one_export_benefit_before_tax", 0), "Year 1 Net Metering Benefit (\$)", true),
         (

@@ -201,9 +201,9 @@ function create_plot(columns, json_file::AbstractString, selected_scenarios::Abs
     # Create separate Net Capital Cost plot
     capcost_plot = PlotlyJS.bar(
         x            =   x,
-        y            =   data[:, "Total Capital Costs (including replacements and incentives) (\$)"],  # Corrected column name
+        y            =   data[:, "Net Capital Costs (including replacements and incentives) (\$)"],  # Corrected column name
         name         =   "Net Capital Cost",
-        text         =   convert_to_shorthand(data[:, "Total Capital Costs (including replacements and incentives) (\$)"]),  # Corrected column name
+        text         =   convert_to_shorthand(data[:, "Net Capital Costs (including replacements and incentives) (\$)"]),  # Corrected column name
         textposition =   "outside",
         textfont     =   attr(size = fsize, family = "Arial"),
         width        =   0.8,
@@ -385,7 +385,7 @@ function create_general_plots(site::String,
     layout_p2 = create_subplot_layout(layout, "Net Present Value", "\$", calc_axis_range(column_name="Net Present Value (NPV) (\$)", df=df), common_fsize)
     layout_p3 = create_subplot_layout(layout, "Payback Period", "Years", [0, 30], common_fsize)
     layout_p4 = create_subplot_layout(layout, "Emissions Reduction", "Percent", [0, 120], common_fsize)
-    layout_p5 = create_subplot_layout(layout, "Net Capital Cost", "\$", calc_axis_range(column_name="Total Capital Costs (including replacements and incentives) (\$)", df=df, start_at_zero=true), common_fsize)
+    layout_p5 = create_subplot_layout(layout, "Net Capital Cost", "\$", calc_axis_range(column_name="Net Capital Costs (including replacements and incentives) (\$)", df=df, start_at_zero=true), common_fsize)
     layout_p6 = create_subplot_layout(layout, "Microgrid LCOE", "\$/kWh", [0,1], common_fsize)
     
 
