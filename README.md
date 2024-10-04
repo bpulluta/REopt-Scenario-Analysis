@@ -65,7 +65,7 @@ REopt-Scenario-Analysis/
    jupyter notebook
    ```
 
-2. Navigate to and open `REoptScenarioAnalysis.ipynb`.
+2. Navigate to and open `REoptScenarioAnalysis.ipynb` in the `ScenarioAnalysis` folder.
 
 3. The notebook contains all the code to run the analysis. Key configuration variables include:
 
