@@ -14,7 +14,7 @@ REopt Scenario Analysis is a Julia-based tool for analyzing and visualizing REop
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/REopt-Scenario-Analysis.git
+   git clone https://github.com/bpulluta/REopt-Scenario-Analysis.git
    cd REopt-Scenario-Analysis
    ```
 
